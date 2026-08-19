@@ -74,12 +74,13 @@ body{
 @keyframes bob{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(3px);opacity:1}}
 
 /* 하단 2열 버튼 */
-.subnav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
+.subnav{margin-top:22px}
 .subnav a{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  background:rgba(255,255,255,.78);border:1px solid var(--line);border-radius:11px;
-  padding:13px 8px;text-decoration:none;
-  font-size:13.5px;font-weight:600;color:var(--ink-60);letter-spacing:-.02em;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:13px;
+  padding:17px 12px;text-decoration:none;
+  font-size:15.5px;font-weight:700;color:var(--ink);letter-spacing:-.02em;
+  box-shadow:0 1px 2px rgba(20,23,26,.04);
   transition:border-color .15s,color .15s,background .15s;
 }
 .subnav a:hover{border-color:var(--navy);color:var(--navy);background:#fff}
@@ -284,7 +285,7 @@ details[open] summary::after{content:" ▴"}
   .rv .tx b{font-size:10.5px;min-height:47px;-webkit-line-clamp:3}
   .rv .tx span{font-size:9.5px}
   .subnav{margin-top:16px}
-  .subnav a{padding:11px 6px;font-size:12.5px}
+  .subnav a{padding:15px 10px;font-size:14.5px}
   .mini-foot{font-size:9.5px;margin-top:12px}
   .cue{margin-top:11px}
 }
@@ -292,7 +293,7 @@ details[open] summary::after{content:" ▴"}
   .hero-h{font-size:24px}
   .logo{width:150px}
   .rv .tx b{font-size:10px;min-height:44px}
-  .subnav a{font-size:12px}
+  .subnav a{font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -311,7 +312,6 @@ details[open] summary::after{content:" ▴"}
 
     <div class="reviews"><div class="track" id="track"></div></div>
     <div class="subnav">
-      <a href="#" data-sheet="rent">장기렌트란?</a>
       <a href="#" data-sheet="faq">자주 묻는 질문</a>
     </div>
 
@@ -497,7 +497,6 @@ details[open] summary::after{content:" ▴"}
       </div>
     </div>
     <div class="subnav">
-      <a href="#" data-sheet="rent">장기렌트란?</a>
       <a href="#" data-sheet="faq">자주 묻는 질문</a>
     </div>
 
@@ -569,18 +568,6 @@ details[open] summary::after{content:" ▴"}
 
 <!-- ══════════ 하단 시트 ══════════ -->
 <div class="sheet-bg" id="sheetBg"></div>
-
-<div class="sheet" id="sheetRent">
-  <div class="sheet-head"><b>장기렌트란?</b><button data-close aria-label="닫기">✕</button></div>
-  <div class="sheet-body">
-    <a class="sheet-link" href="PERSONAL_RENT_URL" target="_blank" rel="noopener">
-      개인 장기렌트 <span>직장인 · 프리랜서 · 개인</span>
-    </a>
-    <a class="sheet-link" href="CORPORATE_RENT_URL" target="_blank" rel="noopener">
-      법인 장기렌트 <span>법인 · 개인사업자</span>
-    </a>
-  </div>
-</div>
 
 <div class="sheet" id="sheetFaq">
   <div class="sheet-head"><b>자주 묻는 질문</b><button data-close aria-label="닫기">✕</button></div>
@@ -696,7 +683,7 @@ boxes.forEach(b=> b.addEventListener('change', sync));
 /* ── 하단 시트 ── */
 (function(){
   const bg = document.getElementById('sheetBg');
-  const map = { rent: document.getElementById('sheetRent'), faq: document.getElementById('sheetFaq') };
+  const map = { faq: document.getElementById('sheetFaq') };
   function close(){
     bg.classList.remove('on');
     Object.values(map).forEach(s=> s.classList.remove('on'));
@@ -929,7 +916,7 @@ render();
 [교체 항목]
 1. 후기 사진/문구 : <script> 상단 REVIEWS 배열에서 수정 (최대 10개, 사진은 정사각 1:1 권장)
 2. 슬라이드 속도  : SLIDE_MS 값 (기본 1600 = 1.6초)
-3. 링크 6개      : HOMEPAGE_URL / INSTAGRAM_URL / BLOG_URL / KAKAO_CHANNEL_URL / PERSONAL_RENT_URL / CORPORATE_RENT_URL
+3. 링크         : HOMEPAGE_URL / KAKAO_CHANNEL_URL (인스타·블로그는 적용 완료)
 4. 시트 연동     : GOOGLE_APPS_SCRIPT_WEB_APP_URL
 5. 푸터          : 대표자명 · 사업자등록번호 · 주소 · 대표번호 · PRIVACY_POLICY_URL
 ※ 로고는 파일 내부에 삽입되어 별도 이미지 파일이 필요 없습니다.
