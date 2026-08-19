@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASO | 사지말고 빌려타소</title>
+<meta property="og:title" content="TASO | 사지말고 빌려타소!">
+<meta property="og:description" content="내 조건에 맞는 신차 장기렌트, 1분이면 상담 신청 완료">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
+
+:root{
+  --ink:#14171A;
+  --ink-60:#5C646C;
+  --ink-35:#98A0A8;
+  --line:#E2E4E7;
+  --card:#FFFFFF;
+  --navy:#1E2450;      /* 로고 컬러 */
+  --navy-dark:#141936;
+  --amber:#E08700;
+  --gauge-bg:#12161B;
+  --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+html,body{
+  height:100%;
+  overflow:hidden;                 /* 페이지 이동은 아래 deck이 담당 */
+  overscroll-behavior:none;
+}
+.deck{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  transform:translate3d(0,0,0);
+  transition:transform .78s cubic-bezier(.32,.72,0,1);   /* 한 화면씩 부드럽게 */
+  will-change:transform;
+}
+body{
+  background:linear-gradient(180deg,#F2F2F0 0%,#E6E7E5 55%,#DEDFDD 100%);
+  background-attachment:fixed;
+  color:var(--ink);
+  font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:16px;line-height:1.55;
+}
+
+/* ── 섹션(1화면 = 1섹터) ── */
+.pane{
+  height:100%;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:30px 16px;
+  position:relative;
+}
+.inner{
+  width:100%;max-width:420px;
+  opacity:0;transform:translate3d(0,14px,0);
+  transition:opacity .55s ease-out,transform .55s ease-out;
+}
+.inner.vis{opacity:1;transform:none}
+.cue{opacity:0;transition:opacity .5s ease .25s}
+.cue.vis{opacity:1}
+
+/* 스크롤 안내 */
+.cue{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:14px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;
+  color:var(--ink-35);text-decoration:none;
+}
+.cue svg{animation:bob 1.9s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(3px);opacity:1}}
+
+/* 하단 2열 버튼 */
+.subnav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
+.subnav a{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  background:rgba(255,255,255,.78);border:1px solid var(--line);border-radius:11px;
+  padding:13px 8px;text-decoration:none;
+  font-size:13.5px;font-weight:600;color:var(--ink-60);letter-spacing:-.02em;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.subnav a:hover{border-color:var(--navy);color:var(--navy);background:#fff}
+.subnav a::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--amber);flex:none;
+}
+
+/* 간이 사업자 정보 */
+.mini-foot{
+  text-align:center;font-size:10.5px;color:var(--ink-35);line-height:1.75;margin-top:16px;
+}
+
+/* ── 하단 시트(팝업) ── */
+.sheet-bg{
+  position:fixed;inset:0;background:rgba(16,20,24,.45);
+  opacity:0;pointer-events:none;transition:opacity .3s ease;z-index:90;
+}
+.sheet-bg.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:50%;bottom:0;width:100%;max-width:452px;
+  transform:translate(-50%,100%);
+  background:#fff;border-radius:20px 20px 0 0;z-index:91;
+  transition:transform .42s cubic-bezier(.32,.72,0,1);
+  max-height:82vh;display:flex;flex-direction:column;
+  box-shadow:0 -8px 40px rgba(16,20,24,.18);
+}
+.sheet.on{transform:translate(-50%,0)}
+.sheet-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px 13px;border-bottom:1px solid var(--line);
+}
+.sheet-head b{font-size:17px;font-weight:800;letter-spacing:-.03em}
+.sheet-head button{
+  background:none;border:none;cursor:pointer;color:var(--ink-35);
+  font-size:20px;line-height:1;padding:2px 4px;
+}
+.sheet-body{padding:16px 20px 26px;overflow-y:auto}
+.sheet-link{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 16px;border:1.5px solid var(--line);border-radius:12px;
+  text-decoration:none;color:var(--ink);font-weight:700;font-size:15px;
+  margin-bottom:9px;transition:border-color .15s,background .15s;
+}
+.sheet-link:hover{border-color:var(--navy);background:#F5F6FB}
+.sheet-link span{font-size:12px;color:var(--ink-35);font-weight:500}
+.qa{border-bottom:1px solid var(--line)}
+.qa:last-child{border-bottom:none}
+.qa summary{
+  font-size:14.5px;font-weight:600;color:var(--ink);
+  padding:14px 2px;letter-spacing:-.02em;
+}
+.qa p{font-size:13.5px;color:var(--ink-60);line-height:1.75;padding:0 2px 15px}
+
+/* ── 섹터 1 : 로고 / 카피 / 후기 ── */
+.logo{display:block;width:186px;margin:0 auto 22px}
+.hero-h{
+  text-align:center;font-size:29px;font-weight:800;letter-spacing:-.04em;line-height:1.25;
+}
+.hero-h em{font-style:normal;color:var(--navy)}
+.hero-p{
+  text-align:center;font-size:14.5px;color:var(--ink-60);margin-top:11px;line-height:1.65;
+}
+
+.reviews{margin-top:28px;overflow:hidden}
+.track{display:flex;gap:9px;will-change:transform}
+.rv{
+  flex:0 0 calc((100% - 18px) / 3);
+  display:flex;flex-direction:column;
+  background:var(--card);border-radius:13px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(20,23,26,.05),0 6px 18px rgba(20,23,26,.06);
+}
+.rv .ph{
+  aspect-ratio:1/1;background:#F3F4F5;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:var(--ink-35);
+}
+.rv .ph img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  pointer-events:none;                 /* 클릭·확대·길게누르기 차단 */
+  user-select:none;-webkit-user-select:none;
+  -webkit-user-drag:none;-webkit-touch-callout:none;
+}
+.rv .tx{padding:10px 9px 11px;flex:1}
+.rv .tx b{
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:11.5px;font-weight:600;line-height:1.5;letter-spacing:-.03em;
+  min-height:52px;word-break:keep-all;
+}
+.rv .tx span{display:block;font-size:10.5px;color:var(--ink-35);margin-top:4px;line-height:1.4}
+
+/* ── 섹터 2 : 설문 ── */
+.survey{
+  background:var(--card);border-radius:var(--r);overflow:hidden;
+  box-shadow:0 1px 2px rgba(20,23,26,.05),0 10px 30px rgba(20,23,26,.09);
+}
+.gauge{background:var(--gauge-bg);padding:16px 18px 13px;display:flex;align-items:center;gap:14px}
+.gauge svg{width:72px;height:41px;flex:none}
+.needle{transform-origin:50px 40px;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.gauge-step{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:var(--amber)}
+.gauge-label{color:#EDF0F3;font-size:13.5px;font-weight:600;margin-top:2px}
+.body{padding:24px 20px 20px}
+
+.step{display:none}
+.step.on{display:block;animation:slide .34s cubic-bezier(.22,1,.36,1)}
+@keyframes slide{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.q{font-size:19px;font-weight:700;letter-spacing:-.025em;line-height:1.4}
+.hint{font-size:13px;color:var(--ink-60);margin-top:7px}
+
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:18px}
+.opt{
+  width:100%;text-align:left;cursor:pointer;background:#fff;
+  border:1.5px solid var(--line);border-radius:11px;padding:14px 15px;
+  font:inherit;font-weight:500;color:var(--ink);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  transition:border-color .15s,background .15s,transform .1s;
+}
+.opt:hover{border-color:var(--navy)}
+.opt:active{transform:scale(.988)}
+.opt::after{content:"";width:15px;height:15px;border-radius:50%;flex:none;border:1.5px solid var(--line);transition:.15s}
+.opt.sel{border-color:var(--navy);background:#F4F5FA}
+.opt.sel::after{border-color:var(--navy);background:var(--navy);box-shadow:inset 0 0 0 3px #fff}
+
+.field{margin-top:18px}
+input[type=text],input[type=tel],textarea{
+  width:100%;font:inherit;color:var(--ink);background:#fff;
+  border:1.5px solid var(--line);border-radius:11px;padding:14px 15px;transition:border-color .15s;
+}
+textarea{min-height:96px;resize:vertical;line-height:1.6}
+input::placeholder,textarea::placeholder{color:var(--ink-35)}
+input:focus,textarea:focus{outline:none;border-color:var(--navy)}
+.err{color:#C0392B;font-size:13px;margin-top:8px;display:none}
+.err.on{display:block}
+
+.nav{display:flex;gap:8px;margin-top:20px}
+.btn{font:inherit;font-weight:700;cursor:pointer;border:none;border-radius:11px;padding:15px 18px;transition:background .15s}
+.btn-main{flex:1;background:var(--navy);color:#fff}
+.btn-main:hover{background:var(--navy-dark)}
+.btn-main:disabled{background:#C6CBD2;cursor:not-allowed}
+.btn-back{background:transparent;color:var(--ink-60);border:1.5px solid var(--line)}
+.btn-back:hover{border-color:var(--ink-35)}
+.skip{display:block;margin:11px auto 0;background:none;border:none;font:inherit;font-size:13px;color:var(--ink-35);cursor:pointer;text-decoration:underline}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.consent{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.all{display:flex;align-items:center;gap:10px;padding:12px 13px;background:#F4F5FA;border-radius:11px;font-weight:700;cursor:pointer;font-size:15px}
+.row{padding:12px 2px;border-bottom:1px solid var(--line)}
+.row:last-of-type{border-bottom:none}
+.row label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14.5px}
+.row .ctx{flex:1;min-width:0;font-weight:600;letter-spacing:-.02em}
+input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:var(--navy);cursor:pointer}
+.tag{
+  flex:none;display:inline-flex;align-items:center;
+  font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:5px;line-height:1;
+}
+.tag.req{background:var(--navy);color:#fff}
+details{margin:6px 0 0 27px}
+summary{font-size:12.5px;color:var(--ink-35);cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:" ▾"}
+details[open] summary::after{content:" ▴"}
+.doc{
+  white-space:pre-line;
+  font-size:11.5px;color:var(--ink-60);line-height:1.7;
+  margin-top:8px;padding:11px 12px;
+  background:#F7F8F9;border:1px solid var(--line);border-radius:9px;
+  max-height:190px;overflow-y:auto;
+}
+.doc b{display:block;color:var(--ink);font-size:12px;margin-bottom:6px}
+
+.done{text-align:center;padding:12px 0 4px}
+.check{width:56px;height:56px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+
+/* ── 섹터 3 : 채널 ── */
+.sec-t{
+  text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  letter-spacing:.2em;color:var(--ink-35);margin-bottom:16px;
+}
+.links{display:flex;flex-direction:column;gap:9px}
+.link{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--card);border-radius:13px;padding:16px 17px;
+  text-decoration:none;font-weight:700;font-size:15.5px;letter-spacing:-.02em;
+  color:#111315;
+  box-shadow:0 1px 2px rgba(20,23,26,.05),0 5px 16px rgba(20,23,26,.055);
+  transition:transform .14s,box-shadow .14s,filter .14s;
+}
+.link:hover{transform:translateY(-2px);box-shadow:0 3px 6px rgba(20,23,26,.06),0 10px 24px rgba(20,23,26,.1);filter:brightness(1.03)}
+.link .ic{width:22px;height:22px;flex:none;display:flex;align-items:center;justify-content:center}
+.link.home{background:#1E2450;color:#FFFFFF}          /* 로고 네이비 */
+.link.insta{background:linear-gradient(45deg,#F9CE34 2%,#EE2A7B 52%,#6228D7 100%)}
+.link.blog{background:#03C75A}                         /* 네이버 그린 */
+.link.kakao{background:#FEE500}                        /* 카카오 옐로우 */
+.footer{text-align:center;font-size:11.5px;color:var(--ink-35);line-height:1.8;margin-top:22px}
+.footer a{color:var(--ink-60)}
+
+@media (max-height:730px){
+  .logo{width:150px;margin-bottom:16px}
+  .hero-h{font-size:25px}
+  .hero-p{font-size:13.5px;margin-top:8px}
+  .reviews{margin-top:20px;gap:7px}
+  .rv .tx{padding:8px 7px 9px}
+  .rv .tx b{font-size:10.5px;min-height:47px;-webkit-line-clamp:3}
+  .rv .tx span{font-size:9.5px}
+  .subnav{margin-top:16px}
+  .subnav a{padding:11px 6px;font-size:12.5px}
+  .mini-foot{font-size:9.5px;margin-top:12px}
+  .cue{margin-top:11px}
+}
+@media (max-width:360px){
+  .hero-h{font-size:24px}
+  .logo{width:150px}
+  .rv .tx b{font-size:10px;min-height:44px}
+  .subnav a{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+<!-- ══════════ 섹터 1 : 로고 · 카피 · 후기 ══════════ -->
+<section class="pane" id="s1">
+  <div class="inner">
+    <img class="logo" src="data:image/png;base64,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" alt="TASO">
+
+    <h1 class="hero-h">사지말고 <em>빌려타소!</em></h1>
+    <p class="hero-p">내 조건에 맞는 신차 장기렌트,<br>1분이면 상담 신청 완료!</p>
+
+    <div class="reviews"><div class="track" id="track"></div></div>
+    <div class="subnav">
+      <a href="#" data-sheet="rent">장기렌트란?</a>
+      <a href="#" data-sheet="faq">자주 묻는 질문</a>
+    </div>
+
+    <a class="cue" href="#s2" aria-label="다음 화면">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
+
+    <p class="mini-foot">
+      주식회사 티에스오토플랜 · 대표 김영준 · 사업자등록번호 136-81-37955<br>
+      경상남도 양산시 물금읍 증산역로 167, 2층 202호 · TEL 1588-3621
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 섹터 2 : 설문 ══════════ -->
+<section class="pane" id="s2">
+  <div class="inner">
+    <div class="survey">
+      <div class="gauge">
+        <svg viewBox="0 0 100 46" aria-hidden="true">
+          <path d="M8 40 A42 42 0 0 1 92 40" fill="none" stroke="#2A3138" stroke-width="4" stroke-linecap="round"/>
+          <path id="arc" d="M8 40 A42 42 0 0 1 92 40" fill="none" stroke="#E08700" stroke-width="4"
+                stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="132"
+                style="transition:stroke-dashoffset .5s cubic-bezier(.22,1,.36,1)"/>
+          <g class="needle" id="needle" transform="rotate(-90 50 40)">
+            <line x1="50" y1="40" x2="50" y2="12" stroke="#F4F6F8" stroke-width="2" stroke-linecap="round"/>
+          </g>
+          <circle cx="50" cy="40" r="3.5" fill="#F4F6F8"/>
+        </svg>
+        <div>
+          <div class="gauge-step"><span id="cur">01</span> / 08</div>
+          <div class="gauge-label" id="glabel">차량 필요 시기</div>
+        </div>
+      </div>
+
+      <div class="body">
+        <section class="step on" data-step="1">
+          <h2 class="q">차량이 언제 필요하신가요?</h2>
+          <div class="opts">
+            <button class="opt" data-name="필요시기" data-val="조건 맞으면 즉시">조건 맞으면 즉시</button>
+            <button class="opt" data-name="필요시기" data-val="3개월 이내">3개월 이내</button>
+            <button class="opt" data-name="필요시기" data-val="상담 후 결정">상담 후 결정</button>
+          </div>
+        </section>
+
+        <section class="step" data-step="2">
+          <h2 class="q">고객님의 유형을 선택해 주세요</h2>
+          <p class="hint">유형에 따라 가능한 조건과 서류가 달라집니다.</p>
+          <div class="opts">
+            <button class="opt" data-name="고객유형" data-val="직장인">직장인 (4대보험·프리랜서 등)</button>
+            <button class="opt" data-name="고객유형" data-val="개인사업자">개인사업자</button>
+            <button class="opt" data-name="고객유형" data-val="법인사업자">법인사업자</button>
+            <button class="opt" data-name="고객유형" data-val="무직자 및 기타">무직자 및 기타</button>
+          </div>
+          <div class="nav"><button class="btn btn-back" data-back>이전</button></div>
+        </section>
+
+        <section class="step" data-step="3">
+          <h2 class="q">어떤 차종을 찾고 계신가요?</h2>
+          <p class="hint">예) 그랜저 하이브리드 / 전기차 / 11인승 승합</p>
+          <div class="field">
+            <input type="text" id="carModel" placeholder="차종을 입력해 주세요" autocomplete="off">
+            <p class="err" id="e3">차종을 입력해 주세요. 미정이면 '미정'이라고 적어주세요.</p>
+          </div>
+          <div class="nav">
+            <button class="btn btn-back" data-back>이전</button>
+            <button class="btn btn-main" data-next="3">다음</button>
+          </div>
+        </section>
+
+        <section class="step" data-step="4">
+          <h2 class="q">성함을 알려주세요</h2>
+          <div class="field">
+            <input type="text" id="name" placeholder="홍길동" autocomplete="name">
+            <p class="err" id="e4">성함을 입력해 주세요. (30자 이내)</p>
+          </div>
+          <div class="nav">
+            <button class="btn btn-back" data-back>이전</button>
+            <button class="btn btn-main" data-next="4">다음</button>
+          </div>
+        </section>
+
+        <section class="step" data-step="5">
+          <h2 class="q">연락 받으실 번호를 알려주세요</h2>
+          <p class="hint">허위 견적 제공 없이, 상담 목적으로만 사용합니다.</p>
+          <div class="field">
+            <input type="tel" id="phone" placeholder="010-0000-0000" inputmode="numeric" autocomplete="tel" maxlength="13">
+            <p class="err" id="e5">010-0000-0000 형식으로 정확히 입력해 주세요.</p>
+          </div>
+          <div class="nav">
+            <button class="btn btn-back" data-back>이전</button>
+            <button class="btn btn-main" data-next="5">다음</button>
+          </div>
+        </section>
+
+        <section class="step" data-step="6">
+          <h2 class="q">언제 통화가 편하신가요?</h2>
+          <div class="opts">
+            <button class="opt" data-name="상담시간" data-val="오전 10시~12시">오전 10시 – 12시</button>
+            <button class="opt" data-name="상담시간" data-val="오후 1시~3시">오후 1시 – 3시</button>
+            <button class="opt" data-name="상담시간" data-val="오후 3시~6시">오후 3시 – 6시</button>
+            <button class="opt" data-name="상담시간" data-val="저녁 6시 이후">저녁 6시 이후</button>
+            <button class="opt" data-name="상담시간" data-val="아무 때나 가능">아무 때나 가능</button>
+          </div>
+          <div class="nav"><button class="btn btn-back" data-back>이전</button></div>
+        </section>
+
+        <section class="step" data-step="7">
+          <h2 class="q">더 알려주실 내용이 있나요?</h2>
+          <p class="hint">예산, 주행거리, 원하는 옵션 등 무엇이든 적어주세요.</p>
+          <div class="field"><textarea id="memo" placeholder="자유롭게 적어주세요"></textarea></div>
+          <div class="nav">
+            <button class="btn btn-back" data-back>이전</button>
+            <button class="btn btn-main" data-next="7">다음</button>
+          </div>
+          <button class="skip" data-next="7">건너뛰기</button>
+        </section>
+
+        <section class="step" data-step="8">
+          <h2 class="q">마지막으로 동의만 남았습니다</h2>
+          <input type="text" id="hp" name="company" tabindex="-1" autocomplete="off"
+                 aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
+          <div class="consent">
+            <label class="all"><input type="checkbox" id="agreeAll"> <span>전체 동의</span></label>
+
+            <div class="row">
+              <label><input type="checkbox" class="agree" id="agreePrivacy">
+                <span class="tag req">필수</span><span class="ctx">개인정보 수집·이용 동의</span></label>
+              <details>
+                <summary>내용 보기</summary>
+                <div class="doc">
+<b>개인정보 수집·이용 동의 전문 (필수)</b>
+1. 수집·이용 목적
+· 장기렌트 및 오토리스 등 차량 이용 관련 상담 및 견적 안내
+· 상담 신청 접수 및 고객 문의 응대
+2. 수집 항목
+· 성명, 연락처
+3. 보유 및 이용 기간
+· 상담 완료 후 3개월 또는 관련 법령에 따른 보관 기간까지
+※ 귀하는 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 다만 동의를 거부할 경우 상담 서비스 이용이 제한될 수 있습니다.
+                </div>
+              </details>
+            </div>
+
+            <div class="row">
+              <label><input type="checkbox" class="agree" id="agreeThird">
+                <span class="tag req">필수</span><span class="ctx">개인정보 제3자 제공 동의</span></label>
+              <details>
+                <summary>내용 보기</summary>
+                <div class="doc">
+<b>개인정보 제3자 제공 동의 (필수)</b>
+1. 제공받는 자
+· 국내 캐피탈사, 카드사 및 렌터카사
+2. 제공 목적
+· 장기렌트 및 오토리스 등 자동차 금융상품 한도 조회 및 심사, 견적 상담
+3. 제공 항목
+· 성명, 연락처
+4. 보유 및 이용 기간
+· 목적 달성 시까지 또는 관련 법령에 따른 보관 기간까지
+※ 귀하는 개인정보 제3자 제공에 대한 동의를 거부할 권리가 있습니다. 다만 동의를 거부할 경우 장기렌트 및 오토리스 상담 서비스 이용이 제한될 수 있습니다.
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="nav">
+            <button class="btn btn-back" data-back>이전</button>
+            <button class="btn btn-main" id="submitBtn" disabled>상담 신청하기</button>
+          </div>
+        </section>
+
+        <section class="step" data-step="9">
+          <div class="done">
+            <div class="check">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 12.5l5.5 5.5L20 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h2 class="q">신청이 접수되었습니다</h2>
+            <p class="hint">선택하신 시간대에 담당자가 연락드립니다.<br>잠시 후 채널 안내 화면으로 이동합니다.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="subnav">
+      <a href="#" data-sheet="rent">장기렌트란?</a>
+      <a href="#" data-sheet="faq">자주 묻는 질문</a>
+    </div>
+
+    <a class="cue" href="#s3" aria-label="다음 화면">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
+
+    <p class="mini-foot">
+      주식회사 티에스오토플랜 · 대표 김영준 · 사업자등록번호 136-81-37955<br>
+      경상남도 양산시 물금읍 증산역로 167, 2층 202호 · TEL 1588-3621
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 섹터 3 : 채널 · 푸터 ══════════ -->
+<section class="pane" id="s3">
+  <div class="inner">
+    <p class="sec-t">TASO CHANNELS</p>
+    <div class="links">
+      <a class="link home" href="HOMEPAGE_URL" target="_blank" rel="noopener">
+        <span class="ic">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/>
+          </svg>
+        </span>
+        홈페이지
+      </a>
+
+      <a class="link insta" href="INSTAGRAM_URL" target="_blank" rel="noopener">
+        <span class="ic">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4"/>
+            <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        인스타그램
+      </a>
+
+      <a class="link blog" href="BLOG_URL" target="_blank" rel="noopener">
+        <span class="ic">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 20V4h4l6 9V4h4v16h-4l-6-9v9H5z"/>
+          </svg>
+        </span>
+        네이버 블로그
+      </a>
+
+      <a class="link kakao" href="KAKAO_CHANNEL_URL" target="_blank" rel="noopener">
+        <span class="ic">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3C6.9 3 2.8 6.3 2.8 10.3c0 2.6 1.7 4.8 4.3 6.1l-1 3.7c-.1.3.3.6.6.4l4.4-2.9c.3 0 .6.1.9.1 5.1 0 9.2-3.3 9.2-7.4S17.1 3 12 3z"/>
+          </svg>
+        </span>
+        카카오톡 채널
+      </a>
+    </div>
+
+    <p class="footer">
+      주식회사 티에스오토플랜 · 대표 김영준<br>
+      경상남도 양산시 물금읍 증산역로 167, 2층 202호<br>
+      사업자등록번호 136-81-37955<br>
+      TEL 1588-3621 · tsauto1118@naver.com<br>
+      <a href="PRIVACY_POLICY_URL">개인정보처리방침</a>
+    </p>
+  </div>
+</section>
+
+</div><!-- /deck -->
+
+<!-- ══════════ 하단 시트 ══════════ -->
+<div class="sheet-bg" id="sheetBg"></div>
+
+<div class="sheet" id="sheetRent">
+  <div class="sheet-head"><b>장기렌트란?</b><button data-close aria-label="닫기">✕</button></div>
+  <div class="sheet-body">
+    <a class="sheet-link" href="PERSONAL_RENT_URL" target="_blank" rel="noopener">
+      개인 장기렌트 <span>직장인 · 프리랜서 · 개인</span>
+    </a>
+    <a class="sheet-link" href="CORPORATE_RENT_URL" target="_blank" rel="noopener">
+      법인 장기렌트 <span>법인 · 개인사업자</span>
+    </a>
+  </div>
+</div>
+
+<div class="sheet" id="sheetFaq">
+  <div class="sheet-head"><b>자주 묻는 질문</b><button data-close aria-label="닫기">✕</button></div>
+  <div class="sheet-body">
+    <details class="qa"><summary>장기렌트와 오토리스는 뭐가 다른가요?</summary>
+      <p>번호판 형태와 회계 처리 방식이 다릅니다. 장기렌트는 '하, 허, 호' 번호판을 사용하고 렌트·리스료 전액을 비용으로 처리할 수 있으며, 오토리스는 일반 번호판을 사용합니다. 고객의 운용 계획이나 상황에 맞게 렌트·리스 상품 컨설팅이 가능합니다.</p></details>
+
+    <details class="qa"><summary>초기 비용 없이 이용할 수 있나요?</summary>
+      <p>보증금·선수금 없이 진행 가능한 조건이 있으며, 선수금·보증금을 넣으면 월 납입료가 낮아집니다. 추가적으로 고객 소득 및 매출증빙 자료에 따라서 선수금·보증금을 낮추는 방향도 고려가 가능하니 심사를 우선 진행하시는 방향으로 추천드립니다.</p></details>
+
+    <details class="qa"><summary>신용등급에 영향이 있나요?</summary>
+      <p>장기렌트는 대출이 아닌 임대 계약으로 부채에 잡히지 않습니다. 다만 계약 전 한도 조회 과정이 있어 사전 안내 후 진행합니다.</p></details>
+
+    <details class="qa"><summary>보험료와 자동차세는 별도인가요?</summary>
+      <p>보험료·자동차세는 월 렌트료에 포함되어 별도로 납부하지 않습니다. 정비·소모품 항목은 선택하신 상품에 따라 포함 여부가 달라집니다.</p></details>
+
+    <details class="qa"><summary>운전 경력이 짧아도 가능한가요?</summary>
+      <p>면허 취득 1년 이상이면 대부분 진행 가능합니다. 연령과 경력에 따라 보험 조건이 달라질 수 있어서 고객 상황에 맞게 상담해 드리고 있으며, 1년 미만 고객님도 진행 가능한 금융사도 제안드리고 있습니다.</p></details>
+
+    <details class="qa"><summary>계약 기간이 끝나면 차량은 어떻게 되나요?</summary>
+      <p>반납, 인수(명의 이전), 재계약 중 선택하실 수 있습니다. 만기 시점 전 계약하신 조건에 따라서 고객 피드백을 드려 신규 대차 및 차량 이용에 불편함이 없도록 관리하고 있습니다.</p></details>
+  </div>
+</div>
+
+<script>
+/* ===== 배포 전 이 값만 교체 ===== */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbzVtdh4ASE-gEaia0dGnN_tREc4cMmqRF3VXQGhZYUuIzrpkNGCCk4rB0D9pEepM2eU/exec";
+const FORM_TOKEN = "TASO-2026-A7K3X";      // Apps Script와 동일한 값이어야 함
+const PAGE_OPEN_AT = Date.now();           // 스팸 판별용 체류시간 측정
+
+/* ═══════════════════════════════════════════════
+   고객 후기 (최대 10개까지 등록 가능 / 1.6초마다 한 칸씩 이동)
+   img  : 사진 파일 경로. 비워두면 'PHOTO' 자리표시가 나옵니다.
+   text : 후기 문구 (카드에는 3줄까지 노출, 넘치면 ... 처리)
+   sub  : 이름 · 차종
+   ═══════════════════════════════════════════════ */
+const REVIEWS = [
+  { img:"", text:"유지비 계산해보고 바로 결정했어요ㅎㅎ 장기렌트가 뭔지도 몰랐는데 하나하나 다 설명해주셔서 마음 편하게 진행했습니다! 진짜 감사드려요~", sub:"김O준 · 그랜저 HEV" },
+  { img:"", text:"애들 둘이라 급하게 알아봤는데 재고 있는 걸로 일정 딱 맞춰주셨어요!! 생각보다 훨씬 빨리 받아서 놀랐네요ㅋㅋ 계속 챙겨주셔서 감사합니다~", sub:"박O현 · 카니발" },
+  { img:"", text:"전기차 처음이라 충전이며 보조금이며 걱정 진짜 많았거든요ㅠㅠ 근데 다 알려주셔서 편하게 계약했어요! 물어보기 편한 게 제일 좋았습니다ㅎㅎ", sub:"이O민 · EV6" },
+  { img:"", text:"법인으로 진행했는데요, 비용 처리되는 부분까지 정리해서 알려주시니까 내부 보고도 수월했어요! 다음 차량도 여기서 하려구요~", sub:"최O우 · GV70" },
+  { img:"", text:"다른 데 견적도 받아봤는데 여기가 제일 낫더라구요ㅎㅎ 무리하게 계약하라고 안 하시고 제 상황 먼저 물어봐주신 게 좋았어요!", sub:"정O석 · 쏘렌토" },
+  { img:"", text:"선수금 없이 되냐고 여쭤봤는데 심사부터 같이 봐주셔서 원하던 조건으로 진행했어요!! 출고 일정도 미리미리 알려주셔서 편했습니다~", sub:"강O빈 · 아이오닉5" }
+];
+const SLIDE_MS = 1600;   // 이동 간격(밀리초)
+/* ════════════════════════════════════════════ */
+
+const LABELS = ["차량 필요 시기","고객 유형","차종","성함","연락처","상담 가능 시간","추가 요청사항","동의 확인","신청 완료"];
+const TOTAL = 8;
+const data = {};
+let step = 1;
+const hist = [];
+const $ = s => document.querySelector(s);
+const steps = document.querySelectorAll('.step');
+
+function render(){
+  steps.forEach(s => s.classList.toggle('on', +s.dataset.step === step));
+  const ratio = step > TOTAL ? 1 : (step - 1) / TOTAL;
+  $('#arc').style.strokeDashoffset = 132 - (132 * ratio);
+  $('#needle').setAttribute('transform', `rotate(${-90 + 180 * ratio} 50 40)`);
+  $('#cur').textContent = step > TOTAL ? '08' : String(step).padStart(2,'0');
+  $('#glabel').textContent = LABELS[step-1];
+}
+function go(n){ hist.push(step); step = n; render(); }
+function back(){ if(hist.length){ step = hist.pop(); render(); } }
+
+document.querySelectorAll('.opt').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    btn.closest('.opts').querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
+    data[btn.dataset.name] = btn.dataset.val;
+    setTimeout(()=>go(step+1), 200);
+  });
+});
+
+const rules = {
+  3: () => { const v=$('#carModel').value.trim(); if(!v){show('e3');return false;} data['차종']=v; return true; },
+  4: () => { const v=$('#name').value.trim(); if(v.length<1||v.length>30){show('e4');return false;} data['성함']=v; return true; },
+  5: () => { const v=$('#phone').value.trim(); if(!/^010-\d{4}-\d{4}$/.test(v)){show('e5');return false;} data['연락처']=v; return true; },
+  7: () => { data['추가내용']=$('#memo').value.trim(); return true; }
+};
+function show(id){ const e=$('#'+id); e.classList.add('on'); setTimeout(()=>e.classList.remove('on'),3500); }
+
+document.querySelectorAll('[data-next]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const s = +b.dataset.next;
+    if(rules[s] && !rules[s]()) return;
+    go(s+1);
+  });
+});
+document.querySelectorAll('[data-back]').forEach(b=> b.addEventListener('click', back));
+
+['carModel','name','phone'].forEach(id=>{
+  $('#'+id).addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); document.querySelector(`[data-next="${step}"]`).click(); }
+  });
+});
+
+$('#phone').addEventListener('input', e=>{
+  const n = e.target.value.replace(/\D/g,'').slice(0,11);
+  e.target.value = n.length<4 ? n : n.length<8 ? `${n.slice(0,3)}-${n.slice(3)}` : `${n.slice(0,3)}-${n.slice(3,7)}-${n.slice(7)}`;
+});
+
+const all = $('#agreeAll'), boxes = [...document.querySelectorAll('.agree')];
+const reqBoxes = [$('#agreePrivacy'), $('#agreeThird')];
+function sync(){
+  $('#submitBtn').disabled = !reqBoxes.every(b=>b.checked);
+  all.checked = boxes.every(b=>b.checked);
+}
+all.addEventListener('change', ()=>{ boxes.forEach(b=>b.checked=all.checked); sync(); });
+boxes.forEach(b=> b.addEventListener('change', sync));
+
+/* ── 하단 시트 ── */
+(function(){
+  const bg = document.getElementById('sheetBg');
+  const map = { rent: document.getElementById('sheetRent'), faq: document.getElementById('sheetFaq') };
+  function close(){
+    bg.classList.remove('on');
+    Object.values(map).forEach(s=> s.classList.remove('on'));
+  }
+  document.querySelectorAll('[data-sheet]').forEach(a=>{
+    a.addEventListener('click', e=>{
+      e.preventDefault();
+      close();
+      bg.classList.add('on');
+      map[a.dataset.sheet].classList.add('on');
+    });
+  });
+  bg.addEventListener('click', close);
+  document.querySelectorAll('[data-close]').forEach(b=> b.addEventListener('click', close));
+  window.addEventListener('keydown', e=>{ if(e.key === 'Escape') close(); });
+})();
+
+$('#submitBtn').addEventListener('click', async ()=>{
+  const btn = $('#submitBtn');
+  btn.disabled = true; btn.textContent = '접수 중...';
+  const p = new URLSearchParams(location.search);
+
+  // 유입일시 (한국시간 · yyyy-MM-dd HH:mm:ss)
+  const 유입일시 = new Date().toLocaleString('sv-SE', { timeZone:'Asia/Seoul' });
+
+  // 유입경로: utm_source > 유입 사이트 도메인 > 직접유입
+  let 경로 = p.get('utm_source') || '';
+  if(!경로 && document.referrer){
+    try{ 경로 = new URL(document.referrer).hostname.replace(/^www\./,''); }catch(_){}
+  }
+  if(!경로) 경로 = '직접유입';
+
+  const payload = {
+    유입일시:     유입일시,
+    캠페인:       p.get('utm_campaign') || '',
+    유입경로:     경로,
+    성함:         data['성함'] || '',
+    연락처:       data['연락처'] || '',
+    필요시기:     data['필요시기'] || '',
+    고객군:       data['고객유형'] || '',
+    상담시간:     data['상담시간'] || '',
+    희망차종:     data['차종'] || '',
+    고객메모:     data['추가내용'] || '',
+    개인정보동의: 'Y',
+    제3자제공동의: 'Y',
+
+    // ── 스팸 차단용 검증값 ──
+    토큰:   FORM_TOKEN,
+    체류초: Math.round((Date.now() - PAGE_OPEN_AT) / 1000),
+    함정:   (document.getElementById('hp').value || '')
+  };
+
+  try{
+    await fetch(ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  }catch(err){ console.error(err); }
+  go(9);
+  setTimeout(()=>{ if(window.__goTo) window.__goTo(2); }, 1600);   // 완료 화면 노출 후 채널 화면으로 이동
+});
+
+render();
+
+/* ══════════ 후기 슬라이더 ══════════ */
+(function(){
+  const track = document.getElementById('track');
+  const list  = REVIEWS.slice(0, 10);
+  if(!list.length) return;
+
+  const card = r => `<div class="rv">
+      <div class="ph">${ r.img ? `<img src="${r.img}" alt="출고 후기">` : 'PHOTO' }</div>
+      <div class="tx"><b>${r.text||''}</b><span>${r.sub||''}</span></div>
+    </div>`;
+
+  const loop = list.length > 3;
+  track.innerHTML = list.map(card).join('') + (loop ? list.slice(0,3).map(card).join('') : '');
+  if(!loop || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const N = list.length;
+  let i = 0, timer = null;
+
+  function step(){
+    i++;
+    const w = track.children[0].getBoundingClientRect().width + 9;   // 카드폭 + 간격
+    track.style.transition = 'transform .6s cubic-bezier(.32,.72,0,1)';
+    track.style.transform  = `translate3d(${-i * w}px,0,0)`;
+    if(i >= N){
+      setTimeout(()=>{                       // 마지막에서 처음으로 자연스럽게 순환
+        track.style.transition = 'none';
+        track.style.transform  = 'translate3d(0,0,0)';
+        i = 0;
+      }, 620);
+    }
+  }
+  function start(){ stop(); timer = setInterval(step, SLIDE_MS); }
+  function stop(){ if(timer) clearInterval(timer); timer = null; }
+
+  track.addEventListener('contextmenu', e=> e.preventDefault());   // 사진 저장/확대 차단
+
+  start();
+  track.addEventListener('mouseenter', stop);
+  track.addEventListener('mouseleave', start);
+  document.addEventListener('visibilitychange', ()=> document.hidden ? stop() : start());
+  window.addEventListener('resize', ()=>{
+    track.style.transition = 'none';
+    track.style.transform  = 'translate3d(0,0,0)';
+    i = 0;
+  }, {passive:true});
+})();
+
+/* ══════════ 한 화면씩 이동 ══════════ */
+(function(){
+  const deck  = document.getElementById('deck');
+  const panes = [...document.querySelectorAll('.pane')];
+  const LAST  = panes.length - 1;
+  const DUR   = 780;
+  let idx = 0, moving = false;
+
+  function reveal(i){
+    panes[i].querySelectorAll('.inner, .cue').forEach(el=> el.classList.add('vis'));
+  }
+  function goTo(i){
+    i = Math.max(0, Math.min(LAST, i));
+    if(i === idx || moving) return;
+    moving = true;
+    idx = i;
+    deck.style.transform = `translate3d(0,${-i * 100}%,0)`;
+    reveal(i);
+    setTimeout(()=>{ moving = false; }, DUR);
+  }
+
+  /* 현재 화면 안에서 더 스크롤할 여지가 있는지(문항이 길어진 경우) */
+  function inner(dir){
+    const el = panes[idx];
+    if(el.scrollHeight <= el.clientHeight + 2) return false;
+    return dir > 0
+      ? el.scrollTop < el.scrollHeight - el.clientHeight - 2
+      : el.scrollTop > 2;
+  }
+
+  /* 마우스 휠 / 트랙패드 */
+  let wheelLock = false;
+  window.addEventListener('wheel', e=>{
+    if(e.target.closest && e.target.closest('.sheet')) return;
+    const dir = Math.sign(e.deltaY);
+    if(!dir) return;
+    if(inner(dir)) return;                 // 내부 스크롤 우선
+    e.preventDefault();
+    if(moving || wheelLock) return;
+    if(Math.abs(e.deltaY) < 5) return;
+    wheelLock = true;
+    setTimeout(()=>{ wheelLock = false; }, DUR + 120);
+    goTo(idx + dir);
+  }, {passive:false});
+
+  /* 터치 */
+  let y0 = 0, t0 = 0, dirNow = 0;
+  window.addEventListener('touchstart', e=>{
+    y0 = e.touches[0].clientY; t0 = Date.now(); dirNow = 0;
+  }, {passive:true});
+
+  function inSheet(t){ return t && t.closest && t.closest('.sheet'); }
+
+  window.addEventListener('touchmove', e=>{
+    if(inSheet(e.target)) return;            // 시트 내부는 자유 스크롤
+    const d = y0 - e.touches[0].clientY;
+    dirNow = Math.sign(d);
+    if(!inner(dirNow)) e.preventDefault();   // 고무줄 튕김 방지
+  }, {passive:false});
+
+  window.addEventListener('touchend', e=>{
+    if(inSheet(e.target)) return;
+    const d  = y0 - e.changedTouches[0].clientY;
+    const dt = Date.now() - t0;
+    const dir = Math.sign(d);
+    if(!dir || moving) return;
+    if(inner(dir)) return;
+    const far  = Math.abs(d) > 55;                       // 충분히 밀었거나
+    const fast = Math.abs(d) > 18 && dt < 320;           // 짧고 빠르게 튕겼거나
+    if(far || fast) goTo(idx + dir);                     // 세기와 무관하게 딱 한 칸
+  }, {passive:true});
+
+  /* 키보드 */
+  window.addEventListener('keydown', e=>{
+    if(/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    if(['ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goTo(idx+1); }
+    if(['ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goTo(idx-1); }
+  });
+
+  /* 안내 화살표 */
+  document.querySelectorAll('.cue').forEach(a=>{
+    a.addEventListener('click', e=>{
+      e.preventDefault();
+      const t = document.querySelector(a.getAttribute('href'));
+      goTo(panes.indexOf(t));
+    });
+  });
+
+  reveal(0);
+  window.__goTo = goTo;      // 제출 완료 후 자동 이동에 사용
+})();
+</script>
+
+<!--
+================================================================
+[교체 항목]
+1. 후기 사진/문구 : <script> 상단 REVIEWS 배열에서 수정 (최대 10개, 사진은 정사각 1:1 권장)
+2. 슬라이드 속도  : SLIDE_MS 값 (기본 1600 = 1.6초)
+3. 링크 6개      : HOMEPAGE_URL / INSTAGRAM_URL / BLOG_URL / KAKAO_CHANNEL_URL / PERSONAL_RENT_URL / CORPORATE_RENT_URL
+4. 시트 연동     : GOOGLE_APPS_SCRIPT_WEB_APP_URL
+5. 푸터          : 대표자명 · 사업자등록번호 · 주소 · 대표번호 · PRIVACY_POLICY_URL
+※ 로고는 파일 내부에 삽입되어 별도 이미지 파일이 필요 없습니다.
+
+[구글 스프레드시트 연동]
+1) 시트 1행 헤더 (A1부터 순서대로):
+   no | 유입일시 | 캠페인 | 이름 | 연락처 | 담당자 배분 | 유입경로 | 필요시기 | 고객군 | 상담가능 시간 | 희망 차종 | 고객메모 | 메모 | 개인정보동의 | 제3자제공동의
+2) 확장 프로그램 -> Apps Script -> 아래 코드 저장
+3) 배포 -> 새 배포 -> 웹 앱 -> 실행: 나 / 액세스: 모든 사용자
+4) 발급 URL을 상단 ENDPOINT에 입력
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    const d = JSON.parse(e.postData.contents);
+    const no = sheet.getLastRow();                 // 헤더 1행 기준 자동 순번
+
+    sheet.appendRow([
+      no, d.유입일시 || '', d.캠페인 || '', d.성함 || '',
+      "'" + (d.연락처 || ''), '', d.유입경로 || '',
+      d.필요시기 || '', d.고객군 || '', d.상담시간 || '',
+      d.희망차종 || '', d.고객메모 || '', '',
+      d.개인정보동의 || '', d.제3자제공동의 || ''
+    ]);
+    return ContentService.createTextOutput('ok');
+  } catch (err) {
+    return ContentService.createTextOutput('error: ' + err);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+================================================================
+-->
+</body>
+</html>
